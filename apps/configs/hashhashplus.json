@@ -2,6 +2,6 @@
   "name": "Hash++",
   "description": "A command interface for Hash++.",
   "downloadable": false,
-  "githuburl": "https://github.com/Minzoi-Lab/hashhashplus"
+  "githuburl": "https://github.com/Minzoi-Lab/hashhashplus",
   "icon": "apps/icons/hashhashplus.png"
 }
