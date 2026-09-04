@@ -1,7 +1,7 @@
 {
   "name": "Minzoi Calculator",
   "description": "A basic calculator with optional sound effects!",
-  "file": "apps/files/minzoicalculator.7z",
+  "file": "apps/files/Minzoi Calculator.7z",
   "downloadable": true,
   "icon": "apps/icons/minzoicalculator.png"
 }
