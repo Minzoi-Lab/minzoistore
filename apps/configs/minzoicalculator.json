@@ -1,0 +1,6 @@
+{
+  "name": "Minzoi Calculator",
+  "description": "A basic calculator with optional sound effects!"
+  "file": "apps/files/minzoicalculator.exe",
+  "downloadable": true
+}
