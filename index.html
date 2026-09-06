@@ -24,11 +24,7 @@
             color: white;
             min-height: 100vh;
         }
-
-        /* =========================
-           HEADER
-        ========================= */
-
+        
         header {
             text-align: center;
             padding: 40px 20px 30px;
@@ -71,10 +67,6 @@
             color: #666;
         }
 
-        /* =========================
-           STORE GRID
-        ========================= */
-
         #store {
             max-width: 1100px;
             margin: auto;
@@ -86,10 +78,6 @@
 
             gap: 25px;
         }
-
-        /* =========================
-           APP
-        ========================= */
 
         .app {
             appearance: none;
@@ -161,10 +149,6 @@
             white-space: nowrap;
         }
 
-        /* =========================
-           EMPTY / ERROR
-        ========================= */
-
         .error,
         .loading,
         .no-results {
@@ -176,10 +160,6 @@
 
             padding: 40px 20px;
         }
-
-        /* =========================
-           OVERLAY
-        ========================= */
 
         #overlay {
             position: fixed;
@@ -202,11 +182,7 @@
             opacity: 1;
             visibility: visible;
         }
-
-        /* =========================
-           SIDEBAR
-        ========================= */
-
+        
         #app-panel {
             position: fixed;
 
@@ -235,10 +211,6 @@
         #app-panel.active {
             transform: translateX(0);
         }
-
-        /* =========================
-           PANEL CLOSE
-        ========================= */
 
         #close-panel {
             position: absolute;
@@ -271,10 +243,6 @@
         #close-panel:active {
             transform: scale(0.9);
         }
-
-        /* =========================
-           PANEL CONTENT
-        ========================= */
 
         .panel-icon {
             width: 120px;
@@ -311,10 +279,6 @@
             white-space: pre-line;
         }
 
-        /* =========================
-           PANEL BUTTON
-        ========================= */
-
         #panel-button {
             display: block;
 
@@ -350,10 +314,6 @@
             display: none;
         }
 
-        /* =========================
-           MOBILE
-        ========================= */
-
         @media (max-width: 600px) {
 
             header {
@@ -384,7 +344,6 @@
                 font-size: 14px;
             }
 
-            /* Bottom sheet */
 
             #app-panel {
                 top: auto;
@@ -431,10 +390,6 @@
             }
         }
 
-        /* =========================
-           REDUCED MOTION
-        ========================= */
-
         @media (prefers-reduced-motion: reduce) {
 
             *,
@@ -475,12 +430,9 @@
     </main>
 
 
-    <!-- Overlay -->
-
     <div id="overlay"></div>
 
 
-    <!-- App panel -->
 
     <aside
         id="app-panel"
@@ -519,35 +471,15 @@
 
     <script>
 
-        /* =========================
-           CONFIGURATION
-        ========================= */
-
         const DISCORD_SERVER_ID =
             "1495108660467204166";
-
-        /*
-         * Discord provides a public widget image
-         * for guilds/servers.
-         *
-         * banner1 includes the server icon.
-         *
-         * If this endpoint is unavailable, the
-         * fallback chain eventually reaches the
-         * normal Discord embed avatar.
-         */
-
+        
         const DISCORD_FALLBACK_ICON =
             `https://discord.com/api/guilds/${DISCORD_SERVER_ID}/widget.png?style=banner1`;
 
 
         const DISCORD_FINAL_FALLBACK =
             "https://cdn.discordapp.com/embed/avatars/0.png";
-
-
-        /* =========================
-           ELEMENTS
-        ========================= */
 
         const store =
             document.getElementById("store");
@@ -585,11 +517,6 @@
 
         let previouslyFocusedElement = null;
 
-
-        /* =========================
-           ICON FALLBACK
-        ========================= */
-
         function setIconWithFallback(
             image,
             iconUrl,
@@ -598,14 +525,8 @@
 
             image.alt = altText || "";
 
-            /*
-             * Reset the fallback state.
-             */
             image.dataset.fallbackLevel = "0";
 
-            /*
-             * Try the app's own icon first.
-             */
             image.src =
                 iconUrl || DISCORD_FALLBACK_ICON;
 
@@ -616,15 +537,7 @@
                     Number(
                         image.dataset.fallbackLevel || "0"
                     );
-
-
-                /*
-                 * LEVEL 0
-                 *
-                 * App icon failed.
-                 *
-                 * Try the Minzoi Discord server.
-                 */
+                
 
                 if (level === 0) {
 
@@ -638,14 +551,6 @@
                 }
 
 
-                /*
-                 * LEVEL 1
-                 *
-                 * Discord widget failed.
-                 *
-                 * Use Discord's generic avatar.
-                 */
-
                 if (level === 1) {
 
                     image.dataset.fallbackLevel = "2";
@@ -657,14 +562,6 @@
 
                 }
 
-
-                /*
-                 * LEVEL 2
-                 *
-                 * Even Discord's fallback failed.
-                 *
-                 * Hide the broken-image icon.
-                 */
 
                 image.onerror = null;
 
@@ -699,21 +596,9 @@
 
         }
 
-
-        /* =========================
-           LOAD STORE
-        ========================= */
-
         async function loadStore() {
 
             try {
-
-                /*
-                 * Cache-busting is intentional here.
-                 *
-                 * GitHub Pages can sometimes keep an
-                 * older JSON response cached.
-                 */
 
                 const response =
                     await fetch(
@@ -757,10 +642,6 @@
 
                     try {
 
-                        /*
-                         * Cache-bust every individual
-                         * app configuration too.
-                         */
 
                         const configResponse =
                             await fetch(
@@ -790,11 +671,6 @@
 
                         const app =
                             await configResponse.json();
-
-
-                        /*
-                         * Basic validation.
-                         */
 
                         if (
                             !app ||
@@ -854,21 +730,12 @@
         }
 
 
-        /* =========================
-           RENDER APPS
-        ========================= */
-
         function renderApps() {
 
             const query =
                 search.value
                     .trim()
                     .toLowerCase();
-
-
-            /*
-             * Search ONLY app names.
-             */
 
             const filteredApps =
                 apps.filter(app => {
@@ -914,11 +781,6 @@
             );
 
         }
-
-
-        /* =========================
-           CREATE APP
-        ========================= */
 
         function createApp(app) {
 
@@ -967,10 +829,6 @@
             card.appendChild(title);
 
 
-            /*
-             * Open sidebar / bottom sheet.
-             */
-
             card.addEventListener(
                 "click",
                 () => openPanel(app, card)
@@ -980,11 +838,6 @@
             store.appendChild(card);
 
         }
-
-
-        /* =========================
-           OPEN PANEL
-        ========================= */
 
         function openPanel(
             app,
@@ -1005,14 +858,6 @@
             panelName.textContent =
                 app.name || "";
 
-
-            /*
-             * Fix old descriptions.
-             *
-             * This also protects against an old
-             * cached Hash++ description.
-             */
-
             if (
                 app.name === "Hash++"
             ) {
@@ -1030,11 +875,6 @@
 
             }
 
-
-            /*
-             * Hide button first.
-             */
-
             panelButton.hidden = true;
 
             panelButton.textContent = "";
@@ -1046,11 +886,6 @@
             panelButton.removeAttribute(
                 "target"
             );
-
-
-            /*
-             * DOWNLOAD
-             */
 
             if (
                 app.downloadable === true &&
@@ -1072,11 +907,6 @@
                     false;
 
             }
-
-
-            /*
-             * GITHUB
-             */
 
             else if (
                 app.githuburl
@@ -1116,11 +946,6 @@
 
         }
 
-
-        /* =========================
-           CLOSE PANEL
-        ========================= */
-
         function closeAppPanel() {
 
             overlay.classList.remove(
@@ -1147,11 +972,6 @@
             }
 
         }
-
-
-        /* =========================
-           EVENTS
-        ========================= */
 
         closePanel.addEventListener(
             "click",
@@ -1188,11 +1008,6 @@
             "input",
             renderApps
         );
-
-
-        /* =========================
-           START
-        ========================= */
 
         loadStore();
 
