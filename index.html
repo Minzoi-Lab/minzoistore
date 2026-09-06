@@ -11,8 +11,14 @@
             box-sizing: border-box;
         }
 
+        html,
         body {
             margin: 0;
+            padding: 0;
+            min-height: 100%;
+        }
+
+        body {
             font-family: Arial, sans-serif;
             background: #0f0f0f;
             color: white;
@@ -72,7 +78,6 @@
         #store {
             max-width: 1100px;
             margin: auto;
-
             padding: 20px;
 
             display: grid;
@@ -87,6 +92,8 @@
         ========================= */
 
         .app {
+            appearance: none;
+
             background: transparent;
             border: 0;
 
@@ -100,6 +107,8 @@
 
             border-radius: 14px;
 
+            color: white;
+
             transition:
                 transform 0.2s ease,
                 background 0.2s ease;
@@ -112,6 +121,11 @@
 
         .app:active {
             transform: scale(0.96);
+        }
+
+        .app:focus-visible {
+            outline: 2px solid #777;
+            outline-offset: 3px;
         }
 
         .icon-container {
@@ -130,6 +144,8 @@
             border-radius: 18px;
 
             display: block;
+
+            background: #181818;
         }
 
         .app h2 {
@@ -271,6 +287,8 @@
             display: block;
 
             margin: 20px auto 25px;
+
+            background: #181818;
         }
 
         #panel-name {
@@ -289,6 +307,8 @@
             line-height: 1.6;
 
             text-align: center;
+
+            white-space: pre-line;
         }
 
         /* =========================
@@ -324,6 +344,10 @@
 
         #panel-button:active {
             transform: scale(0.97);
+        }
+
+        #panel-button[hidden] {
+            display: none;
         }
 
         /* =========================
@@ -379,7 +403,10 @@
 
                 border-radius: 20px 20px 0 0;
 
-                padding: 25px;
+                padding:
+                    25px
+                    25px
+                    calc(25px + env(safe-area-inset-bottom));
 
                 transform: translateY(100%);
             }
@@ -422,6 +449,7 @@
 <body>
 
     <header>
+
         <h1>Minzoi Store</h1>
 
         <p>
@@ -431,9 +459,10 @@
         <input
             id="search"
             type="search"
-            placeholder="Search apps and tools..."
+            placeholder="Search apps..."
             autocomplete="off"
         >
+
     </header>
 
 
@@ -453,9 +482,17 @@
 
     <!-- App panel -->
 
-    <aside id="app-panel">
+    <aside
+        id="app-panel"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="panel-name"
+    >
 
-        <button id="close-panel" aria-label="Close">
+        <button
+            id="close-panel"
+            aria-label="Close"
+        >
             ×
         </button>
 
@@ -482,28 +519,185 @@
 
     <script>
 
-        const store = document.getElementById("store");
+        /* =========================
+           CONFIGURATION
+        ========================= */
 
-        const search = document.getElementById("search");
+        const DISCORD_SERVER_ID =
+            "1495108660467204166";
 
-        const overlay = document.getElementById("overlay");
+        /*
+         * Discord provides a public widget image
+         * for guilds/servers.
+         *
+         * banner1 includes the server icon.
+         *
+         * If this endpoint is unavailable, the
+         * fallback chain eventually reaches the
+         * normal Discord embed avatar.
+         */
 
-        const panel = document.getElementById("app-panel");
+        const DISCORD_FALLBACK_ICON =
+            `https://discord.com/api/guilds/${DISCORD_SERVER_ID}/widget.png?style=banner1`;
 
-        const closePanel = document.getElementById("close-panel");
 
-        const panelIcon = document.getElementById("panel-icon");
+        const DISCORD_FINAL_FALLBACK =
+            "https://cdn.discordapp.com/embed/avatars/0.png";
 
-        const panelName = document.getElementById("panel-name");
+
+        /* =========================
+           ELEMENTS
+        ========================= */
+
+        const store =
+            document.getElementById("store");
+
+        const search =
+            document.getElementById("search");
+
+        const overlay =
+            document.getElementById("overlay");
+
+        const panel =
+            document.getElementById("app-panel");
+
+        const closePanel =
+            document.getElementById("close-panel");
+
+        const panelIcon =
+            document.getElementById("panel-icon");
+
+        const panelName =
+            document.getElementById("panel-name");
 
         const panelDescription =
-            document.getElementById("panel-description");
+            document.getElementById(
+                "panel-description"
+            );
 
         const panelButton =
-            document.getElementById("panel-button");
+            document.getElementById(
+                "panel-button"
+            );
 
 
         let apps = [];
+
+        let previouslyFocusedElement = null;
+
+
+        /* =========================
+           ICON FALLBACK
+        ========================= */
+
+        function setIconWithFallback(
+            image,
+            iconUrl,
+            altText
+        ) {
+
+            image.alt = altText || "";
+
+            /*
+             * Reset the fallback state.
+             */
+            image.dataset.fallbackLevel = "0";
+
+            /*
+             * Try the app's own icon first.
+             */
+            image.src =
+                iconUrl || DISCORD_FALLBACK_ICON;
+
+
+            image.onerror = () => {
+
+                const level =
+                    Number(
+                        image.dataset.fallbackLevel || "0"
+                    );
+
+
+                /*
+                 * LEVEL 0
+                 *
+                 * App icon failed.
+                 *
+                 * Try the Minzoi Discord server.
+                 */
+
+                if (level === 0) {
+
+                    image.dataset.fallbackLevel = "1";
+
+                    image.src =
+                        DISCORD_FALLBACK_ICON;
+
+                    return;
+
+                }
+
+
+                /*
+                 * LEVEL 1
+                 *
+                 * Discord widget failed.
+                 *
+                 * Use Discord's generic avatar.
+                 */
+
+                if (level === 1) {
+
+                    image.dataset.fallbackLevel = "2";
+
+                    image.src =
+                        DISCORD_FINAL_FALLBACK;
+
+                    return;
+
+                }
+
+
+                /*
+                 * LEVEL 2
+                 *
+                 * Even Discord's fallback failed.
+                 *
+                 * Hide the broken-image icon.
+                 */
+
+                image.onerror = null;
+
+                image.style.objectFit = "contain";
+
+                image.src =
+                    "data:image/svg+xml," +
+                    encodeURIComponent(`
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="256"
+                            height="256"
+                            viewBox="0 0 256 256"
+                        >
+                            <rect
+                                width="256"
+                                height="256"
+                                rx="48"
+                                fill="#181818"
+                            />
+                            <text
+                                x="128"
+                                y="145"
+                                text-anchor="middle"
+                                font-size="100"
+                                fill="#777"
+                            >?</text>
+                        </svg>
+                    `);
+
+            };
+
+        }
 
 
         /* =========================
@@ -514,28 +708,75 @@
 
             try {
 
+                /*
+                 * Cache-busting is intentional here.
+                 *
+                 * GitHub Pages can sometimes keep an
+                 * older JSON response cached.
+                 */
+
                 const response =
-                    await fetch("configs.json");
+                    await fetch(
+                        "configs.json?v=" +
+                        Date.now(),
+                        {
+                            cache: "no-store"
+                        }
+                    );
+
 
                 if (!response.ok) {
+
                     throw new Error(
                         "Could not load configs.json"
                     );
+
                 }
+
 
                 const configFiles =
                     await response.json();
 
 
+                if (!Array.isArray(configFiles)) {
+
+                    throw new Error(
+                        "configs.json must contain an array"
+                    );
+
+                }
+
+
                 apps = [];
 
 
-                for (const configFile of configFiles) {
+                for (
+                    const configFile
+                    of configFiles
+                ) {
 
                     try {
 
+                        /*
+                         * Cache-bust every individual
+                         * app configuration too.
+                         */
+
                         const configResponse =
-                            await fetch(configFile);
+                            await fetch(
+                                configFile +
+                                (
+                                    configFile.includes("?")
+                                        ? "&"
+                                        : "?"
+                                ) +
+                                "v=" +
+                                Date.now(),
+                                {
+                                    cache: "no-store"
+                                }
+                            );
+
 
                         if (!configResponse.ok) {
 
@@ -551,11 +792,44 @@
                             await configResponse.json();
 
 
+                        /*
+                         * Basic validation.
+                         */
+
+                        if (
+                            !app ||
+                            typeof app !== "object"
+                        ) {
+
+                            throw new Error(
+                                "Invalid app config: " +
+                                configFile
+                            );
+
+                        }
+
+
+                        if (!app.name) {
+
+                            console.warn(
+                                "App config has no name:",
+                                configFile
+                            );
+
+                            continue;
+
+                        }
+
+
                         apps.push(app);
 
                     } catch (error) {
 
-                        console.error(error);
+                        console.error(
+                            "Failed to load app config:",
+                            configFile,
+                            error
+                        );
 
                     }
 
@@ -564,9 +838,11 @@
 
                 renderApps();
 
+
             } catch (error) {
 
                 console.error(error);
+
 
                 store.innerHTML =
                     '<div class="error">' +
@@ -591,7 +867,7 @@
 
 
             /*
-             * ONLY SEARCH APP NAME
+             * Search ONLY app names.
              */
 
             const filteredApps =
@@ -609,7 +885,9 @@
             store.innerHTML = "";
 
 
-            if (filteredApps.length === 0) {
+            if (
+                filteredApps.length === 0
+            ) {
 
                 const result =
                     document.createElement("div");
@@ -631,23 +909,25 @@
             }
 
 
-            filteredApps.forEach(createApp);
+            filteredApps.forEach(
+                createApp
+            );
 
         }
 
 
         /* =========================
-           CREATE APP ICON
+           CREATE APP
         ========================= */
 
         function createApp(app) {
 
             const card =
-                document.createElement("div");
+                document.createElement("button");
+
+            card.type = "button";
 
             card.className = "app";
-
-            card.tabIndex = 0;
 
 
             const iconContainer =
@@ -662,10 +942,12 @@
 
             icon.className = "icon";
 
-            icon.src = app.icon;
 
-            icon.alt =
-                `${app.name} icon`;
+            setIconWithFallback(
+                icon,
+                app.icon,
+                `${app.name} icon`
+            );
 
 
             iconContainer.appendChild(icon);
@@ -678,37 +960,20 @@
                 app.name;
 
 
-            card.appendChild(iconContainer);
+            card.appendChild(
+                iconContainer
+            );
 
             card.appendChild(title);
 
 
             /*
-             * Open sidebar / bottom sheet
+             * Open sidebar / bottom sheet.
              */
 
             card.addEventListener(
                 "click",
-                () => openPanel(app)
-            );
-
-
-            card.addEventListener(
-                "keydown",
-                event => {
-
-                    if (
-                        event.key === "Enter" ||
-                        event.key === " "
-                    ) {
-
-                        event.preventDefault();
-
-                        openPanel(app);
-
-                    }
-
-                }
+                () => openPanel(app, card)
             );
 
 
@@ -721,21 +986,66 @@
            OPEN PANEL
         ========================= */
 
-        function openPanel(app) {
+        function openPanel(
+            app,
+            sourceElement
+        ) {
 
-            panelIcon.src =
-                app.icon || "";
+            previouslyFocusedElement =
+                sourceElement || document.activeElement;
 
-            panelIcon.alt =
-                `${app.name} icon`;
+
+            setIconWithFallback(
+                panelIcon,
+                app.icon,
+                `${app.name || "App"} icon`
+            );
 
 
             panelName.textContent =
                 app.name || "";
 
 
-            panelDescription.textContent =
-                app.description || "";
+            /*
+             * Fix old descriptions.
+             *
+             * This also protects against an old
+             * cached Hash++ description.
+             */
+
+            if (
+                app.name === "Hash++"
+            ) {
+
+                panelDescription.textContent =
+                    "The HashHashPlus interface, supports:\n" +
+                    "Terminal Use\n" +
+                    "Built-in UI\n" +
+                    "IDE coming soon.";
+
+            } else {
+
+                panelDescription.textContent =
+                    app.description || "";
+
+            }
+
+
+            /*
+             * Hide button first.
+             */
+
+            panelButton.hidden = true;
+
+            panelButton.textContent = "";
+
+            panelButton.removeAttribute(
+                "href"
+            );
+
+            panelButton.removeAttribute(
+                "target"
+            );
 
 
             /*
@@ -753,17 +1063,24 @@
                 panelButton.href =
                     app.file;
 
-                panelButton.removeAttribute(
-                    "target"
+                panelButton.setAttribute(
+                    "download",
+                    ""
                 );
 
+                panelButton.hidden =
+                    false;
+
             }
+
 
             /*
              * GITHUB
              */
 
-            else if (app.githuburl) {
+            else if (
+                app.githuburl
+            ) {
 
                 panelButton.textContent =
                     "GitHub";
@@ -774,43 +1091,28 @@
                 panelButton.target =
                     "_blank";
 
-            }
+                panelButton.rel =
+                    "noopener noreferrer";
 
-            /*
-             * No button
-             */
-
-            else {
-
-                panelButton.textContent = "";
-
-                panelButton.removeAttribute(
-                    "href"
-                );
-
-                panelButton.style.display =
-                    "none";
+                panelButton.hidden =
+                    false;
 
             }
 
 
-            if (
-                app.downloadable === true ||
-                app.githuburl
-            ) {
+            overlay.classList.add(
+                "active"
+            );
 
-                panelButton.style.display =
-                    "block";
-
-            }
-
-
-            overlay.classList.add("active");
-
-            panel.classList.add("active");
+            panel.classList.add(
+                "active"
+            );
 
             document.body.style.overflow =
                 "hidden";
+
+
+            closePanel.focus();
 
         }
 
@@ -832,8 +1134,24 @@
             document.body.style.overflow =
                 "";
 
+
+            if (
+                previouslyFocusedElement &&
+                document.body.contains(
+                    previouslyFocusedElement
+                )
+            ) {
+
+                previouslyFocusedElement.focus();
+
+            }
+
         }
 
+
+        /* =========================
+           EVENTS
+        ========================= */
 
         closePanel.addEventListener(
             "click",
@@ -847,15 +1165,16 @@
         );
 
 
-        /*
-         * Escape key
-         */
-
         document.addEventListener(
             "keydown",
             event => {
 
-                if (event.key === "Escape") {
+                if (
+                    event.key === "Escape" &&
+                    panel.classList.contains(
+                        "active"
+                    )
+                ) {
 
                     closeAppPanel();
 
@@ -865,19 +1184,15 @@
         );
 
 
-        /*
-         * Search
-         */
-
         search.addEventListener(
             "input",
             renderApps
         );
 
 
-        /*
-         * Start
-         */
+        /* =========================
+           START
+        ========================= */
 
         loadStore();
 
